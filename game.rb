@@ -50,9 +50,10 @@ end
 class Computer
   def initialize
     @choices = ['r', 'g', 'y', 'b', 'm', 'c', '']
+    @secretcode = []
   end
 
-  def select_colors
+  def create_secret_code
     4.times do
       @selection = rand(7)
       @secretcode.push(@choices[@selection])
@@ -68,5 +69,20 @@ class Player
   end
 end
 
-new_board = Board.new
-new_board.print_board
+# Game logic
+class Game
+  def initialize(computer, player, board)
+    @computer = computer
+    @player = player
+    @board = board
+  end
+
+  def play_game
+    @board.print_board
+    @computer.create_secret_code
+    @player.guess_code
+  end
+end
+
+new_game = Game.new(Computer.new, Player.new, Board.new)
+new_game.play_game
