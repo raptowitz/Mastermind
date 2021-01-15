@@ -50,7 +50,6 @@ end
 class Computer
   def initialize
     @choices = ['r', 'g', 'y', 'b', 'm', 'c', '']
-    @secretcode = []
   end
 
   def select_colors
@@ -61,6 +60,13 @@ class Computer
   end
 end
 
+# Player Guesser
+class Player
+  def guess_code
+    puts 'Guess the secret code!'
+    gets.chomp.split(//)
+  end
+end
 
 new_board = Board.new
 new_board.print_board
