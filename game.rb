@@ -2,32 +2,44 @@
 
 # Terminal output colors
 module Colors
-  def red(text)
-    "\e[41m#{text}\e[0m"
+  def red
+    "\e[41mr\e[0m"
   end
 
-  def green(text)
-    "\e[42m#{text}\e[0m"
+  def green
+    "\e[42mg\e[0m"
   end
 
-  def yellow(text)
-    "\e[43m#{text}\e[0m"
+  def yellow
+    "\e[43my\e[0m"
   end
 
-  def blue(text)
-    "\e[44m#{text}\e[0m"
+  def blue
+    "\e[44mb\e[0m"
   end
 
-  def magenta(text)
-    "\e[45m#{text}\e[0m"
+  def magenta
+    "\e[45mm\e[0m"
   end
 
-  def cyan(text)
-    "\e[46m#{text}\e[0m"
+  def cyan
+    "\e[46mc\e[0m"
   end
 
-  def gray(text)
-    "\e[47m#{text}\e[0m"
+  def blank
+    "\e[47m?\e[0m"
+  end
+
+  def color(guess)
+    case guess
+    when 'r' then red
+    when 'g' then green
+    when 'y' then yellow
+    when 'b' then blue
+    when 'm' then magenta
+    when 'c' then cyan
+    else blank
+    end
   end
 end
 
@@ -36,13 +48,24 @@ class Board
   include Colors
 
   def initialize
-    @board = Array.new(12) { Array.new(4, gray('?')) }
+    @board = Array.new(12) { Array.new(4, blank) }
   end
 
   def print_board
     @board.each do |row|
       puts row.join
     end
+  end
+
+  def place_move(player_guess, round)
+    @player_guess = player_guess
+    @round = round
+    @color_guess = []
+
+    @player_guess.each do |guess|
+      @color_guess.push(color(guess))
+    end
+    @board[@round] = @color_guess
   end
 end
 
@@ -75,12 +98,17 @@ class Game
     @computer = computer
     @player = player
     @board = board
+    @round = nil
   end
 
   def play_game
-    @board.print_board
-    @computer.create_secret_code
-    @player.guess_code
+    @round = 0
+    12.times do
+      @board.print_board
+      @computer.create_secret_code
+      @board.place_move(@player.guess_code, @round)
+      @round += 1
+    end
   end
 end
 
