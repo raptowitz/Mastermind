@@ -42,8 +42,12 @@ module Colors
     end
   end
 
-  def red_hint
+  def red_peg
     "\e[31m●\e[0m"
+  end
+
+  def grey_peg
+    "\e[37m●\e[0m"
   end
 end
 
@@ -61,15 +65,18 @@ class Board
     end
   end
 
-  def place_move(player_guess, round)
+  def place_move(player_guess, red_pegs, round)
     @player_guess = player_guess
+    @red_pegs = red_pegs
     @round = round
     @color_guesses = []
 
     @player_guess.each do |guess|
       @color_guesses.push(color(guess))
     end
+
     @board[@round] = @color_guesses
+    @board[@round].push(@red_pegs)
   end
 end
 
@@ -115,16 +122,26 @@ class Game
     @computer.create_secret_code
     12.times do
       @board.print_board
-      @board.place_move(@player.guess_code, @round)
-      red_pegs
+      @board.place_move(@player.guess_code, red_pegs, @round)
       @round += 1
     end
   end
 
   def red_pegs
+    @red_pegs = []
     @player.player_guess.each_with_index do |guess, index|
-      puts red_hint if guess == @computer.secretcode[index]
+      if guess == @computer.secretcode[index]
+        @red_pegs.push(red_peg)
+      else
+        grey_pegs(guess)
+      end
     end
+    @red_pegs
+  end
+
+  def grey_pegs(guess)
+    @guess = guess
+    puts grey_peg if @computer.secretcode.include?(@guess)
   end
 end
 
