@@ -41,6 +41,10 @@ module Colors
     else blank
     end
   end
+
+  def red_hint
+    "\e[31m●\e[0m"
+  end
 end
 
 # Board
@@ -60,17 +64,18 @@ class Board
   def place_move(player_guess, round)
     @player_guess = player_guess
     @round = round
-    @color_guess = []
+    @color_guesses = []
 
     @player_guess.each do |guess|
-      @color_guess.push(color(guess))
+      @color_guesses.push(color(guess))
     end
-    @board[@round] = @color_guess
+    @board[@round] = @color_guesses
   end
 end
 
 # Random computer player
 class Computer
+  attr_reader :secretcode
   def initialize
     @choices = ['r', 'g', 'y', 'b', 'm', 'c', '']
     @secretcode = []
@@ -78,36 +83,47 @@ class Computer
 
   def create_secret_code
     4.times do
-      @selection = rand(7)
-      @secretcode.push(@choices[@selection])
+      @select = rand(7)
+      @secretcode.push(@choices[@select])
     end
+    puts @secretcode
   end
 end
 
 # Player Guesser
 class Player
+  attr_reader :player_guess
+
   def guess_code
     puts 'Guess the secret code!'
-    gets.chomp.split(//)
+    @player_guess = gets.chomp.split(//)
   end
 end
 
 # Game logic
 class Game
+  include Colors
+
   def initialize(computer, player, board)
     @computer = computer
     @player = player
     @board = board
-    @round = nil
   end
 
   def play_game
     @round = 0
+    @computer.create_secret_code
     12.times do
       @board.print_board
-      @computer.create_secret_code
       @board.place_move(@player.guess_code, @round)
+      red_pegs
       @round += 1
+    end
+  end
+
+  def red_pegs
+    @player.player_guess.each_with_index do |guess, index|
+      puts red_hint if guess == @computer.secretcode[index]
     end
   end
 end
