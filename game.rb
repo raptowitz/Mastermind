@@ -65,9 +65,9 @@ class Board
     end
   end
 
-  def place_move(player_guess, red_pegs, round)
+  def place_move(player_guess, hints, round)
     @player_guess = player_guess
-    @red_pegs = red_pegs
+    @hints = hints
     @round = round
     @color_guesses = []
 
@@ -76,7 +76,7 @@ class Board
     end
 
     @board[@round] = @color_guesses
-    @board[@round].push(@red_pegs)
+    @board[@round].push(@hints)
   end
 end
 
@@ -122,26 +122,22 @@ class Game
     @computer.create_secret_code
     12.times do
       @board.print_board
-      @board.place_move(@player.guess_code, red_pegs, @round)
+      @board.place_move(@player.guess_code, hints, @round)
       @round += 1
     end
   end
 
-  def red_pegs
+  def hints
     @red_pegs = []
+    @grey_pegs = []
     @player.player_guess.each_with_index do |guess, index|
       if guess == @computer.secretcode[index]
         @red_pegs.push(red_peg)
-      else
-        grey_pegs(guess)
+      elsif @computer.secretcode.include?(guess)
+        @grey_pegs.push(grey_peg)
       end
     end
-    @red_pegs
-  end
-
-  def grey_pegs(guess)
-    @guess = guess
-    puts grey_peg if @computer.secretcode.include?(@guess)
+    @red_pegs.concat(@grey_pegs)
   end
 end
 
