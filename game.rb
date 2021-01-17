@@ -69,13 +69,15 @@ class Board
     @player_guess.map { |guess| color(guess) }
   end
 
-  def place_move(player_guess, hints, round)
+  def place_move(player_guess, red_hints, grey_hints, round)
     @player_guess = player_guess
-    @hints = hints
+    @red_hints = red_hints
+    @grey_hints = grey_hints
     @round = round
 
     @board[@round] = color_move
-    @board[@round].push(@hints)
+    @board[@round].push(@red_hints)
+    @board[@round].push(@grey_hints)
   end
 end
 
@@ -99,10 +101,12 @@ end
 # Player Guesser
 class Player
   attr_reader :player_guess
+  def initialize
+    @choices = %w[r g y b m c]
+  end
 
   def guess_code
     puts 'Guess the secret code!'
-    @choices = %w[r g y b m c]
     @player_guess = gets.chomp.split(//)
     validate_guess
     @player_guess
@@ -125,29 +129,42 @@ class Game
     @computer = computer
     @player = player
     @board = board
+    @round = 0
   end
 
   def play_game
-    @round = 0
     @computer.create_secret_code
     12.times do
       @board.print_board
-      @board.place_move(@player.guess_code, hints, @round)
+      @board.place_move(@player.guess_code, red_hints, grey_hints, @round)
       @round += 1
     end
   end
 
-  def hints
+  def red_hints
     @red_pegs = []
-    @grey_pegs = []
+    @decoded = []
     @player.player_guess.each_with_index do |guess, index|
-      if guess == @computer.secretcode[index]
-        @red_pegs.push(red_peg)
-      elsif @computer.secretcode.include?(guess)
+      next unless guess == @computer.secretcode[index]
+
+      @red_pegs.push(red_peg)
+      @decoded.push(index)
+    end
+    @red_pegs
+  end
+
+  def grey_hints
+    @grey_pegs = []
+    @player.player_guess.each do |guess|
+      @computer.secretcode.each_with_index do |code, index|
+        next unless guess == code && @decoded.none?(index)
+
         @grey_pegs.push(grey_peg)
+        @decoded.push(index)
+        break
       end
     end
-    @red_pegs.concat(@grey_pegs)
+    @grey_pegs
   end
 end
 
