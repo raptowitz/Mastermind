@@ -94,7 +94,7 @@ class Computer
       @select = rand(6)
       @secretcode.push(@choices[@select])
     end
-    puts @secretcode
+    p @secretcode
   end
 end
 
@@ -137,30 +137,35 @@ class Game
     12.times do
       @board.print_board
       @board.place_move(@player.guess_code, red_hints, grey_hints, @round)
+      break if @red_pegs.length == 4
+
       @round += 1
     end
+    @board.print_board
+    puts 'You cracked the code!'
   end
 
   def red_hints
     @red_pegs = []
-    @decoded = []
+    @red_decoded = []
     @player.player_guess.each_with_index do |guess, index|
       next unless guess == @computer.secretcode[index]
 
       @red_pegs.push(red_peg)
-      @decoded.push(index)
+      @red_decoded.push(index)
     end
     @red_pegs
   end
 
   def grey_hints
     @grey_pegs = []
+    @grey_decoded = []
     @player.player_guess.each do |guess|
       @computer.secretcode.each_with_index do |code, index|
-        next unless guess == code && @decoded.none?(index)
+        next unless guess == code && @red_decoded.none?(index) && @grey_decoded.none?(index)
 
         @grey_pegs.push(grey_peg)
-        @decoded.push(index)
+        @grey_decoded.push(index)
         break
       end
     end
@@ -170,3 +175,6 @@ end
 
 new_game = Game.new(Computer.new, Player.new, Board.new)
 new_game.play_game
+
+# puts "guess is #{guess} matches code #{code}. code index #{code_index} is not a red 
+# peg in #{@red_decoded} and code index #{code_index} is not a grey peg in #{@grey_decoded}"
