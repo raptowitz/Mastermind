@@ -65,17 +65,16 @@ class Board
     end
   end
 
+  def color_move
+    @player_guess.map { |guess| color(guess) }
+  end
+
   def place_move(player_guess, hints, round)
     @player_guess = player_guess
     @hints = hints
     @round = round
-    @color_guesses = []
 
-    @player_guess.each do |guess|
-      @color_guesses.push(color(guess))
-    end
-
-    @board[@round] = @color_guesses
+    @board[@round] = color_move
     @board[@round].push(@hints)
   end
 end
@@ -84,13 +83,13 @@ end
 class Computer
   attr_reader :secretcode
   def initialize
-    @choices = ['r', 'g', 'y', 'b', 'm', 'c', '']
+    @choices = %w[r g y b m c]
     @secretcode = []
   end
 
   def create_secret_code
     4.times do
-      @select = rand(7)
+      @select = rand(6)
       @secretcode.push(@choices[@select])
     end
     puts @secretcode
@@ -103,7 +102,18 @@ class Player
 
   def guess_code
     puts 'Guess the secret code!'
+    @choices = %w[r g y b m c]
     @player_guess = gets.chomp.split(//)
+    validate_guess
+    @player_guess
+  end
+
+  def validate_guess
+    until @player_guess.all? { |guess| @choices.include?(guess) } &&
+          @player_guess.length == 4
+      puts 'Guess 4 colors: r, g, y, b, m, c'
+      @player_guess = gets.chomp.split(//)
+    end
   end
 end
 
