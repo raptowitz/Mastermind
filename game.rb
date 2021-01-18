@@ -40,7 +40,10 @@ module Colors
     when 'c' then cyan
     end
   end
+end
 
+# pegs
+module Hints
   def red_peg
     "\e[31m●\e[0m"
   end
@@ -48,11 +51,43 @@ module Colors
   def grey_peg
     "\e[37m●\e[0m"
   end
+
+  def red_hints(guess, secretcode)
+    @guess = guess
+    @secretcode = secretcode
+    @red_pegs = []
+    @red_decoded = []
+    @guess.each_with_index do |letter, index|
+      next unless letter == @secretcode[index]
+
+      @red_pegs.push(red_peg)
+      @red_decoded.push(index)
+    end
+    @red_pegs
+  end
+
+  def grey_hints
+    @grey_pegs = []
+    @grey_decoded = []
+    @guess.each_with_index do |letter, letter_index|
+      @secretcode.each_with_index do |code, code_index|
+        next unless letter == code && @grey_decoded.none?(code_index) &&
+                    @red_decoded.none?(letter_index) &&
+                    @red_decoded.none?(code_index)
+
+        @grey_pegs.push(grey_peg)
+        @grey_decoded.push(code_index)
+        break
+      end
+    end
+    @grey_pegs
+  end
 end
 
 # Board
 class Board
   include Colors
+  attr_reader :red_pegs
 
   def initialize
     @board = Array.new(12) { Array.new(4, blank) }
@@ -73,7 +108,7 @@ class Board
     @red_hints = red_hints
     @grey_hints = grey_hints
     @round = round
-    puts "\e[H\e[2J"
+    #puts "\e[H\e[2J"
     @board[@round] = color_move
     @board[@round].push(@red_hints)
     @board[@round].push(@grey_hints)
@@ -82,6 +117,7 @@ end
 
 # Random computer player
 class Computer
+  include Hints
   attr_reader :secretcode
   def initialize
     @choices = %w[r g y b m c]
@@ -93,22 +129,40 @@ class Computer
       @select = rand(6)
       @secretcode.push(@choices[@select])
     end
-    @secretcode
+    @secretcode = %w[r r y b]
   end
 
-  def guess_code
-    @computer_guess = []
-    4.times do
-      @select = rand(6)
-      @computer_guess.push(@choices[@select])
+  def guess_code(round, secretcode)
+    @round = round
+    @secretcode = secretcode
+    @possible_codes = [['r', 'r', 'r', 'g'], ['r', 'r', 'r', 'y'], ['r', 'r', 'r', 'b'], ['r', 'y', 'r', 'b']]
+    # @choices.permutation(4).to_a
+
+    if @round.zero?
+      @computer_guess = %w[r r g g]
+      @red_guess = red_hints(@computer_guess, @secretcode)
+      @grey_guess = grey_hints
+      # returns array without things that are true for the condition
+      @possible_codes = @possible_codes.reject do |guess|
+        red_hints(guess, @computer_guess).length != @red_guess.length ||
+          grey_hints.length != @grey_guess.length
+      end
+      p @possible_codes
+
     end
+
+    # @computer_guess = []
+    # 4.times do
+    #   @select = rand(6)
+    #   @computer_guess.push(@choices[@select])
+    # end
     @computer_guess
   end
 end
 
 # Player Guesser
 class Player
-  attr_reader :player_guess
+  attr_reader :player_guess, :secretcode
   def initialize
     @choices = %w[r g y b m c]
   end
@@ -116,7 +170,8 @@ class Player
   def create_secret_code
     puts 'Enter 4 letter secret code (choices: r g y b m c)'
     @secretcode = gets.chomp.split(//)
-    validate(@secretcode)
+    @secretcode = validate(@secretcode)
+    @secretcode
   end
 
   def guess_code
@@ -139,19 +194,22 @@ end
 # Game logic
 class Game
   include Colors
+  include Hints
+  attr_reader :round
 
   def initialize(computer, player, board)
     @computer = computer
     @player = player
     @board = board
     @round = 0
+    @secretcode = nil
   end
 
   def play_game
     create_secret_code
-    12.times do
+    1.times do
       @board.print_board
-      @board.place_move(guess, red_hints, grey_hints, @round)
+      @board.place_move(guess, red_hints(@guess, @secretcode), grey_hints, @round)
       break if @red_pegs.length == 4
 
       @round += 1
@@ -164,7 +222,7 @@ class Game
     @guess = if @player_role == 'b'
                @player.guess_code
              else
-               @computer.guess_code
+               @computer.guess_code(@round, @secretcode)
              end
     @guess
   end
@@ -201,39 +259,7 @@ class Game
       puts "\nAll right, then. Keep your secrets. (shh...code was #{@secretcode})"
     end
   end
-
-  def red_hints
-    @red_pegs = []
-    @red_decoded = []
-    @guess.each_with_index do |guess, index|
-      next unless guess == @secretcode[index]
-
-      @red_pegs.push(red_peg)
-      @red_decoded.push(index)
-    end
-    @red_pegs
-  end
-
-  def grey_hints
-    @grey_pegs = []
-    @grey_decoded = []
-    @guess.each_with_index do |guess, guess_index|
-      @secretcode.each_with_index do |code, code_index|
-        next unless guess == code && @grey_decoded.none?(code_index) &&
-                    @red_decoded.none?(guess_index) &&
-                    @red_decoded.none?(code_index)
-
-        @grey_pegs.push(grey_peg)
-        @grey_decoded.push(code_index)
-        break
-      end
-    end
-    @grey_pegs
-  end
 end
 
 new_game = Game.new(Computer.new, Player.new, Board.new)
 new_game.play_game
-
-# puts "guess #{guess} matches #{code}. guess index #{guess_index} is not a red
-# peg #{@red_decoded} or grey peg #{@grey_decoded}"
