@@ -3,31 +3,31 @@
 # Terminal output colors
 module Colors
   def red
-    "\e[41mr\e[0m"
+    "\e[41m r \e[0m"
   end
 
   def green
-    "\e[42mg\e[0m"
+    "\e[42m g \e[0m"
   end
 
   def yellow
-    "\e[43my\e[0m"
+    "\e[43m y \e[0m"
   end
 
   def blue
-    "\e[44mb\e[0m"
+    "\e[44m b \e[0m"
   end
 
   def magenta
-    "\e[45mm\e[0m"
+    "\e[45m m \e[0m"
   end
 
   def cyan
-    "\e[46mc\e[0m"
+    "\e[46m c \e[0m"
   end
 
   def blank
-    "\e[47m?\e[0m"
+    "\e[47m ? \e[0m"
   end
 
   def color(guess)
@@ -94,7 +94,7 @@ class Computer
       @select = rand(6)
       @secretcode.push(@choices[@select])
     end
-    p @secretcode
+    @secretcode
   end
 end
 
@@ -106,7 +106,7 @@ class Player
   end
 
   def guess_code
-    puts 'Guess the secret code!'
+    puts 'Guess the secret code! (choices: r g y b m c)'
     @player_guess = gets.chomp.split(//)
     validate_guess
     @player_guess
@@ -142,7 +142,15 @@ class Game
       @round += 1
     end
     @board.print_board
-    puts 'You cracked the code!'
+    display_results
+  end
+
+  def display_results
+    if @red_pegs.length == 4
+      puts 'You cracked the code!'
+    else
+      puts "Try again! Secret code was #{@computer.secretcode}"
+    end
   end
 
   def red_hints
@@ -160,12 +168,14 @@ class Game
   def grey_hints
     @grey_pegs = []
     @grey_decoded = []
-    @player.player_guess.each do |guess|
-      @computer.secretcode.each_with_index do |code, index|
-        next unless guess == code && @red_decoded.none?(index) && @grey_decoded.none?(index)
+    @player.player_guess.each_with_index do |guess, guess_index|
+      @computer.secretcode.each_with_index do |code, code_index|
+        next unless guess == code && @grey_decoded.none?(code_index) &&
+                    @red_decoded.none?(guess_index) &&
+                    @red_decoded.none?(code_index)
 
         @grey_pegs.push(grey_peg)
-        @grey_decoded.push(index)
+        @grey_decoded.push(code_index)
         break
       end
     end
@@ -176,5 +186,4 @@ end
 new_game = Game.new(Computer.new, Player.new, Board.new)
 new_game.play_game
 
-# puts "guess is #{guess} matches code #{code}. code index #{code_index} is not a red 
-# peg in #{@red_decoded} and code index #{code_index} is not a grey peg in #{@grey_decoded}"
+# puts "guess #{guess} matches #{code}. guess index #{guess_index} is not a red peg #{@red_decoded} or grey peg #{@grey_decoded}"
