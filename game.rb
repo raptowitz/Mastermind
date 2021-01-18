@@ -38,7 +38,6 @@ module Colors
     when 'b' then blue
     when 'm' then magenta
     when 'c' then cyan
-    else blank
     end
   end
 
@@ -66,11 +65,11 @@ class Board
   end
 
   def color_move
-    @player_guess.map { |guess| color(guess) }
+    @guess.map { |guess| color(guess) }
   end
 
-  def place_move(player_guess, red_hints, grey_hints, round)
-    @player_guess = player_guess
+  def place_move(guess, red_hints, grey_hints, round)
+    @guess = guess
     @red_hints = red_hints
     @grey_hints = grey_hints
     @round = round
@@ -171,7 +170,7 @@ class Game
   end
 
   def create_secret_code
-    puts 'Would you like to be the code breaker (key b) or the code maker (key m)?'
+    puts 'Would you like to be a code breaker (key b) or a code maker (key m)?'
     @player_role = gets.chomp
     if @player_role == 'b'
       @secretcode = @computer.create_secret_code
@@ -188,13 +187,18 @@ class Game
       puts "Enter 'b' or 'm'"
       @player_role = gets.chomp
     end
+    if @player_role == 'b'
+      @secretcode = @computer.create_secret_code
+    elsif @player_role == 'm'
+      @secretcode = @player.create_secret_code
+    end
   end
 
   def display_results
     if @red_pegs.length == 4
-      puts "\nYou cracked the code!"
+      puts "\nThe code was cracked!"
     else
-      puts "\nBetter luck next time! Secret code was #{@secretcode}"
+      puts "\nAll right, then. Keep your secrets. (shh...code was #{@secretcode})"
     end
   end
 
