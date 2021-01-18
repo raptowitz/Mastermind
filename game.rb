@@ -74,7 +74,7 @@ class Board
     @red_hints = red_hints
     @grey_hints = grey_hints
     @round = round
-
+    puts "\e[H\e[2J"
     @board[@round] = color_move
     @board[@round].push(@red_hints)
     @board[@round].push(@grey_hints)
@@ -105,19 +105,26 @@ class Player
     @choices = %w[r g y b m c]
   end
 
+  def create_secret_code
+    puts 'Enter 4 letter secret code (choices: r g y b m c)'
+    @secretcode = gets.chomp.split(//)
+    validate(@secretcode)
+  end
+
   def guess_code
     puts 'Guess the secret code! (choices: r g y b m c)'
     @player_guess = gets.chomp.split(//)
-    validate_guess
-    @player_guess
+    validate(@player_guess)
   end
 
-  def validate_guess
-    until @player_guess.all? { |guess| @choices.include?(guess) } &&
-          @player_guess.length == 4
-      puts 'Guess 4 colors: r, g, y, b, m, c'
-      @player_guess = gets.chomp.split(//)
+  def validate(guess)
+    @guess = guess
+    until @guess.all? { |letter| @choices.include?(letter) } &&
+          @guess.length == 4
+      puts 'Choose 4 colors: r, g, y, b, m, c'
+      @guess = gets.chomp.split(//)
     end
+    @guess
   end
 end
 
@@ -133,7 +140,7 @@ class Game
   end
 
   def play_game
-    @computer.create_secret_code
+    create_secret_code
     12.times do
       @board.print_board
       @board.place_move(@player.guess_code, red_hints, grey_hints, @round)
@@ -145,11 +152,30 @@ class Game
     display_results
   end
 
+  def create_secret_code
+    puts 'Would you like to be the code breaker (key b) or the code maker (key m)?'
+    @player_role = gets.chomp
+    if @player_role == 'b'
+      @computer.create_secret_code
+    elsif @player_role == 'm'
+      @player.create_secret_code
+    else
+      valid_role
+    end
+  end
+
+  def valid_role
+    until @player_role == 'b' || @player_role == 'm'
+      puts "Enter 'b' or 'm'"
+      @player_role = gets.chomp
+    end
+  end
+
   def display_results
     if @red_pegs.length == 4
-      puts 'You cracked the code!'
+      puts "\nYou cracked the code!\n"
     else
-      puts "Try again! Secret code was #{@computer.secretcode}"
+      puts "\nBetter luck next time! Secret code was #{@computer.secretcode}\n"
     end
   end
 
@@ -186,4 +212,5 @@ end
 new_game = Game.new(Computer.new, Player.new, Board.new)
 new_game.play_game
 
-# puts "guess #{guess} matches #{code}. guess index #{guess_index} is not a red peg #{@red_decoded} or grey peg #{@grey_decoded}"
+# puts "guess #{guess} matches #{code}. guess index #{guess_index} is not a red
+# peg #{@red_decoded} or grey peg #{@grey_decoded}"
