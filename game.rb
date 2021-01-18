@@ -86,15 +86,24 @@ class Computer
   attr_reader :secretcode
   def initialize
     @choices = %w[r g y b m c]
-    @secretcode = []
   end
 
   def create_secret_code
+    @secretcode = []
     4.times do
       @select = rand(6)
       @secretcode.push(@choices[@select])
     end
     @secretcode
+  end
+
+  def guess_code
+    @computer_guess = []
+    4.times do
+      @select = rand(6)
+      @computer_guess.push(@choices[@select])
+    end
+    @computer_guess
   end
 end
 
@@ -143,7 +152,7 @@ class Game
     create_secret_code
     12.times do
       @board.print_board
-      @board.place_move(@player.guess_code, red_hints, grey_hints, @round)
+      @board.place_move(guess, red_hints, grey_hints, @round)
       break if @red_pegs.length == 4
 
       @round += 1
@@ -152,16 +161,26 @@ class Game
     display_results
   end
 
+  def guess
+    @guess = if @player_role == 'b'
+               @player.guess_code
+             else
+               @computer.guess_code
+             end
+    @guess
+  end
+
   def create_secret_code
     puts 'Would you like to be the code breaker (key b) or the code maker (key m)?'
     @player_role = gets.chomp
     if @player_role == 'b'
-      @computer.create_secret_code
+      @secretcode = @computer.create_secret_code
     elsif @player_role == 'm'
-      @player.create_secret_code
+      @secretcode = @player.create_secret_code
     else
       valid_role
     end
+    @secretcode
   end
 
   def valid_role
@@ -173,17 +192,17 @@ class Game
 
   def display_results
     if @red_pegs.length == 4
-      puts "\nYou cracked the code!\n"
+      puts "\nYou cracked the code!"
     else
-      puts "\nBetter luck next time! Secret code was #{@computer.secretcode}\n"
+      puts "\nBetter luck next time! Secret code was #{@secretcode}"
     end
   end
 
   def red_hints
     @red_pegs = []
     @red_decoded = []
-    @player.player_guess.each_with_index do |guess, index|
-      next unless guess == @computer.secretcode[index]
+    @guess.each_with_index do |guess, index|
+      next unless guess == @secretcode[index]
 
       @red_pegs.push(red_peg)
       @red_decoded.push(index)
@@ -194,8 +213,8 @@ class Game
   def grey_hints
     @grey_pegs = []
     @grey_decoded = []
-    @player.player_guess.each_with_index do |guess, guess_index|
-      @computer.secretcode.each_with_index do |code, code_index|
+    @guess.each_with_index do |guess, guess_index|
+      @secretcode.each_with_index do |code, code_index|
         next unless guess == code && @grey_decoded.none?(code_index) &&
                     @red_decoded.none?(guess_index) &&
                     @red_decoded.none?(code_index)
