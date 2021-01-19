@@ -129,34 +129,32 @@ class Computer
       @select = rand(6)
       @secretcode.push(@choices[@select])
     end
-    @secretcode = %w[r r y b]
+    @secretcode
   end
 
+  # following 2 methods are implementing Swaszek strategy
   def guess_code(round, secretcode)
     @round = round
     @secretcode = secretcode
-    @possible_codes = [['r', 'r', 'r', 'g'], ['r', 'r', 'r', 'y'], ['r', 'r', 'r', 'b'], ['r', 'y', 'r', 'b']]
-    # @choices.permutation(4).to_a
 
     if @round.zero?
       @computer_guess = %w[r r g g]
-      @red_guess = red_hints(@computer_guess, @secretcode)
-      @grey_guess = grey_hints
-      # returns array without things that are true for the condition
-      @possible_codes = @possible_codes.reject do |guess|
-        red_hints(guess, @computer_guess).length != @red_guess.length ||
-          grey_hints.length != @grey_guess.length
-      end
-      p @possible_codes
-
+      @possible_codes = @choices.repeated_permutation(4).to_a
+    else
+      @computer_guess = @possible_codes[0]
     end
-
-    # @computer_guess = []
-    # 4.times do
-    #   @select = rand(6)
-    #   @computer_guess.push(@choices[@select])
-    # end
+    reduce_possibilities
     @computer_guess
+  end
+
+  def reduce_possibilities
+    @red_guess = red_hints(@computer_guess, @secretcode)
+    @grey_guess = grey_hints
+    @possible_codes = @possible_codes.reject do |guess|
+      red_hints(@computer_guess, guess).length != @red_guess.length ||
+        grey_hints.length != @grey_guess.length
+    end
+    @possible_codes
   end
 end
 
@@ -207,7 +205,7 @@ class Game
 
   def play_game
     create_secret_code
-    1.times do
+    12.times do
       @board.print_board
       @board.place_move(guess, red_hints(@guess, @secretcode), grey_hints, @round)
       break if @red_pegs.length == 4
