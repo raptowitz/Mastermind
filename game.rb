@@ -39,7 +39,7 @@ class Game
   end
 
   def create_secret_code
-    puts 'Would you like to be a code breaker (key b) or a code maker (key m)?'
+    puts "\nWould you like to be a code breaker (key b) or a code maker (key m)?"
     @player_role = gets.chomp
     if @player_role == 'b'
       @secretcode = @computer.create_secret_code
